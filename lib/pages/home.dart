@@ -133,59 +133,114 @@ class _HomeState extends State<Home> {
             SizedBox(
               height: 30.0,
             ),
-            Container(
-              margin: EdgeInsets.only(right: 20.0, left: 5.0),
-              child: Material(
-                elevation: 9.0,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: EdgeInsets.all(10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.asset(
-                        "images/salad.png",
-                        height: 120,
-                        width: 120,
-                        fit: BoxFit.cover,
+            SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Column(
+                // Wrap content in a Column
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(right: 20.0, left: 5.0),
+                    child: Material(
+                      elevation: 9.0,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              "images/salad.png",
+                              height: 120,
+                              width: 120,
+                              fit: BoxFit.cover,
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Salad food with majone",
+                                    style: AppWidget.semiBooldTextFeildStyle(),
+                                  ),
+                                  SizedBox(
+                                    height: 5.0,
+                                  ),
+                                  Text(
+                                    "Honey good cheese",
+                                    style: AppWidget.LightTextFeildStyle(),
+                                  ),
+                                  SizedBox(
+                                    height: 5.0,
+                                  ),
+                                  Text(
+                                    "\$28",
+                                    style: AppWidget.semiBooldTextFeildStyle(),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
                       ),
-                      SizedBox(
-                        width: 20.0,
-                      ),
-                      Column(
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width / 2,
-                            child: Text(
-                              "Salad food with majone",
-                              style: AppWidget.semiBooldTextFeildStyle(),
-                            ),
-                          ),
-                          SizedBox(
-                            height: 5.0,
-                          ),
-                          Container(
-                            width: MediaQuery.of(context).size.width / 2,
-                            child: Text(
-                              "Honey good cheese",
-                              style: AppWidget.LightTextFeildStyle(),
-                            ),
-                          ),
-                          SizedBox(
-                            height: 5.0,
-                          ),
-                          Container(
-                            width: MediaQuery.of(context).size.width / 2,
-                            child: Text(
-                              "\$28",
-                              style: AppWidget.semiBooldTextFeildStyle(),
-                            ),
-                          )
-                        ],
-                      )
-                    ],
+                    ),
                   ),
-                ),
+                  SizedBox(
+                    height: 18.0,
+                  ),
+                  // Add another container with similar structure here if needed
+                  Container(
+                    margin: EdgeInsets.only(right: 20.0, left: 5.0),
+                    child: Material(
+                      elevation: 9.0,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              "images/salad.png",
+                              height: 120,
+                              width: 120,
+                              fit: BoxFit.cover,
+                            ),
+                            SizedBox(
+                              width: 20.0,
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Salad food with majone",
+                                    style: AppWidget.semiBooldTextFeildStyle(),
+                                  ),
+                                  SizedBox(
+                                    height: 5.0,
+                                  ),
+                                  Text(
+                                    "Honey good cheese",
+                                    style: AppWidget.LightTextFeildStyle(),
+                                  ),
+                                  SizedBox(
+                                    height: 5.0,
+                                  ),
+                                  Text(
+                                    "\$28",
+                                    style: AppWidget.semiBooldTextFeildStyle(),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             )
           ],
