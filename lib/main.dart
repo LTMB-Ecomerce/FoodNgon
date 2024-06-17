@@ -1,12 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:food/admin/admin_login.dart';
+import 'package:food/admin/home_admin.dart';
 import 'package:food/firebase_options.dart';
 import 'package:food/pages/bottomnav.dart';
 import 'package:food/pages/home.dart';
 import 'package:food/pages/login.dart';
 import 'package:food/pages/onboard.dart';
 import 'package:food/pages/signup.dart';
+import 'package:food/pages/wallet.dart';
 import 'package:food/widgets/app_constant.dart';
 
 void main() async {
@@ -17,8 +20,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

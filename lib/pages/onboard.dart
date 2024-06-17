@@ -4,7 +4,7 @@ import 'package:food/widgets/content_model.dart';
 import 'package:food/widgets/widget_support.dart';
 
 class Onboard extends StatefulWidget {
-  const Onboard({super.key});
+  const Onboard({Key? key}) : super(key: key);
 
   @override
   State<Onboard> createState() => _OnboardState();
@@ -17,7 +17,6 @@ class _OnboardState extends State<Onboard> {
   @override
   void initState() {
     _controller = PageController(initialPage: 0);
-
     super.initState();
   }
 
@@ -34,50 +33,59 @@ class _OnboardState extends State<Onboard> {
         children: [
           Expanded(
             child: PageView.builder(
-                controller: _controller,
-                itemCount: contents.length,
-                onPageChanged: (int index) {
-                  setState(() {
-                    currentIndex = index;
-                  });
-                },
-                itemBuilder: (_, i) {
-                  return Padding(
-                    padding:
-                        EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0),
-                    child: Column(
-                      children: [
-                        Image.asset(
-                          contents[i].image,
-                          height: 450,
-                          width: MediaQuery.of(context).size.width,
-                          fit: BoxFit.fill,
+              controller: _controller,
+              itemCount: contents.length,
+              onPageChanged: (int index) {
+                setState(() {
+                  currentIndex = index;
+                });
+              },
+              itemBuilder: (_, i) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 40),
+                      Image.asset(
+                        contents[i].image,
+                        height: 300,
+                        width: MediaQuery.of(context).size.width,
+                        fit: BoxFit.contain,
+                      ),
+                      SizedBox(height: 40.0),
+                      Text(
+                        contents[i].title,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
-                        SizedBox(
-                          height: 40.0,
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 20.0),
+                      Text(
+                        contents[i].description,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.black,
                         ),
-                        Text(
-                          contents[i].title,
-                          style: AppWidget.HeadlineTextFeildStyle(),
-                        ),
-                        SizedBox(
-                          height: 20.0,
-                        ),
-                        Text(
-                          contents[i].description,
-                          style: AppWidget.LightTextFeildStyle(),
-                        )
-                      ],
-                    ),
-                  );
-                }),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
-          Container(
+          Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 contents.length,
-                (index) => buildDot(index, context),
+                (index) => buildDot(index),
               ),
             ),
           ),
@@ -85,42 +93,49 @@ class _OnboardState extends State<Onboard> {
             onTap: () {
               if (currentIndex == contents.length - 1) {
                 Navigator.pushReplacement(
-                    context, MaterialPageRoute(builder: (context) => SignUp()));
+                  context,
+                  MaterialPageRoute(builder: (context) => SignUp()),
+                );
+              } else {
+                _controller.nextPage(
+                  duration: Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
               }
-              _controller.nextPage(
-                  duration: Duration(milliseconds: 100),
-                  curve: Curves.bounceIn);
             },
             child: Container(
-              decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 101, 157, 197),
-                  borderRadius: BorderRadius.circular(20)),
               height: 60,
-              margin: EdgeInsets.all(40),
-              width: double.infinity,
+              margin: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              decoration: BoxDecoration(
+                color: Color.fromARGB(255, 101, 157, 197),
+                borderRadius: BorderRadius.circular(30),
+              ),
               child: Center(
                 child: Text(
-                  currentIndex == contents.length - 1 ? "Start" : "Next",
+                  currentIndex == contents.length - 1 ? "Get Started" : "Next",
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Container buildDot(int index, BuildContext context) {
+  Widget buildDot(int index) {
     return Container(
       height: 10.0,
       width: currentIndex == index ? 18 : 7,
       margin: EdgeInsets.only(right: 5),
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6), color: Colors.black38),
+        borderRadius: BorderRadius.circular(6),
+        color: currentIndex == index ? Colors.black : Colors.black38,
+      ),
     );
   }
 }

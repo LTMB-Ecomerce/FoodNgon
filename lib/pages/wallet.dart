@@ -1,13 +1,15 @@
-import "dart:convert";
-
-import "package:flutter/material.dart";
-import "package:flutter_stripe/flutter_stripe.dart";
-import "package:food/widgets/app_constant.dart";
-import "package:food/widgets/widget_support.dart";
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:food/service/database.dart';
+import 'package:food/service/shared_pref.dart';
+import 'package:food/widgets/app_constant.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart' as Material; // Import with a prefix
 
 class Wallet extends StatefulWidget {
-  const Wallet({super.key});
+  const Wallet({Key? key}) : super(key: key);
 
   @override
   State<Wallet> createState() => _WalletState();
@@ -16,21 +18,24 @@ class Wallet extends StatefulWidget {
 class _WalletState extends State<Wallet> {
   String? wallet, id;
   int? add;
-  TextEditingController amountcontroller = new TextEditingController();
+  TextEditingController amountController = TextEditingController();
 
-  getthesharedpref() async {
-    setState(() {});
+  Future<void> initializeFirebase() async {
+    await Firebase.initializeApp();
   }
 
-  ontheload() async {
-    await getthesharedpref();
+  Future<void> getSharedPrefs() async {
+    wallet = await SharedPreferenceHelper().getUserWallet();
+    id = await SharedPreferenceHelper().getUserId();
     setState(() {});
   }
 
   @override
   void initState() {
-    ontheload();
     super.initState();
+    initializeFirebase().then((_) {
+      getSharedPrefs();
+    });
   }
 
   Map<String, dynamic>? paymentIntent;
@@ -38,253 +43,285 @@ class _WalletState extends State<Wallet> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-          margin: EdgeInsets.only(top: 60.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Material(
-                elevation: 2.0,
-                child: Container(
-                  padding: EdgeInsets.only(bottom: 10.0),
-                  child: Center(
-                    child: Text(
-                      "Wallet",
-                      style: AppWidget.HeadlineTextFeildStyle(),
+      appBar: AppBar(
+        title: Text('Wallet'),
+        centerTitle: true,
+      ),
+      body: wallet == null
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10.0),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: Offset(0, 2), // changes position of shadow
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 30.0,
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(color: Color(0xFFF2F2F2)),
-                child: Row(
-                  children: [
-                    Image.asset("images/wallet1.png",
-                        height: 60, width: 60, fit: BoxFit.fill),
-                    SizedBox(
-                      width: 40.0,
-                    ),
-                    Column(
+                    padding: EdgeInsets.all(20.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Your wallet",
-                          style: AppWidget.LightTextFeildStyle(),
+                          'Your Wallet',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        SizedBox(
-                          height: 5.0,
+                        SizedBox(height: 10.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '\$ $wallet',
+                              style: TextStyle(
+                                fontSize: 24.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                _openAddMoneyDialog(context);
+                              },
+                              child: Text('Add Money'),
+                            ),
+                          ],
                         ),
-                        Text(
-                          "\$" + "100",
-                          style: AppWidget.boldTextFeildStyle(),
-                        )
                       ],
-                    )
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 20.0,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 20.0),
-                child: Text(
-                  "Add money",
-                  style: AppWidget.semiBooldTextFeildStyle(),
-                ),
-              ),
-              SizedBox(
-                height: 10.0,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      makePayment('100');
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFFE9E2E2)),
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Text(
-                        "\$" + "100",
-                        style: AppWidget.semiBooldTextFeildStyle(),
-                      ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      makePayment('500');
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFFE9E2E2)),
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Text(
-                        "\$" + "500",
-                        style: AppWidget.semiBooldTextFeildStyle(),
-                      ),
+                  SizedBox(height: 20.0),
+                  Text(
+                    'Quick Add',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      makePayment('1000');
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFFE9E2E2)),
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Text(
-                        "\$" + "1000",
-                        style: AppWidget.semiBooldTextFeildStyle(),
-                      ),
+                  SizedBox(height: 10.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildAmountButton('100'),
+                      _buildAmountButton('500'),
+                      _buildAmountButton('1000'),
+                      _buildAmountButton('2000'),
+                    ],
+                  ),
+                  SizedBox(height: 30.0),
+                  Text(
+                    'Successful Orders',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      makePayment('2000');
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFFE9E2E2)),
-                          borderRadius: BorderRadius.circular(5)),
-                      child: Text(
-                        "\$" + "2000",
-                        style: AppWidget.semiBooldTextFeildStyle(),
-                      ),
-                    ),
-                  )
+                  SizedBox(height: 10.0),
+                  _buildSuccessfulOrders(),
                 ],
               ),
-              SizedBox(
-                height: 50.0,
-              ),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20.0),
-                  padding: EdgeInsets.symmetric(vertical: 12.0),
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(
-                      color: Color(0xFF008080),
-                      borderRadius: BorderRadius.circular(8)),
-                  child: Center(
-                    child: Text(
-                      "Add Money",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              )
-            ],
-          )),
+            ),
+    );
+  }
+
+  Widget _buildAmountButton(String amount) {
+    return GestureDetector(
+      onTap: () {
+        makePayment(amount);
+      },
+      child: Container(
+        padding: EdgeInsets.all(10.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          '\$$amount',
+          style: TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF008080),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessfulOrders() {
+    return Column(
+      children: [
+        _buildOrderTile("Order #1", "\$50.00"),
+        _buildOrderTile("Order #2", "\$75.00"),
+        _buildOrderTile("Order #3", "\$100.00"),
+        _buildOrderTile("Order #4", "\$120.00"),
+      ],
+    );
+  }
+
+  Widget _buildOrderTile(String orderNumber, String amount) {
+    return Material.Card(
+      elevation: 2.0,
+      margin: EdgeInsets.symmetric(vertical: 5.0),
+      child: ListTile(
+        leading: Icon(Icons.check_circle, color: Colors.green),
+        title: Text(orderNumber),
+        subtitle: Text('Amount: $amount'),
+      ),
     );
   }
 
   Future<void> makePayment(String amount) async {
     try {
-      // Gọi hàm tạo Payment Intent với số tiền và đơn vị tiền tệ là USD
       paymentIntent = await createPaymentIntent(amount, 'USD');
-      //Payment Sheet
-      await Stripe.instance
-          .initPaymentSheet(
-              paymentSheetParameters: SetupPaymentSheetParameters(
-                  paymentIntentClientSecret: paymentIntent!['client_secret'],
-                  style: ThemeMode.dark,
-                  merchantDisplayName: 'Adnan'))
-          .then((value) {});
 
-      ///now finally display payment sheeet
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: paymentIntent!['client_secret'],
+          style: ThemeMode.dark,
+          merchantDisplayName: 'Your Merchant Name',
+        ),
+      );
+
       displayPaymentSheet(amount);
     } catch (e, s) {
-      print('exception:$e$s');
+      print('Exception: $e $s');
     }
   }
 
-  displayPaymentSheet(String amount) async {
+  Future<void> displayPaymentSheet(String amount) async {
     try {
       await Stripe.instance.presentPaymentSheet().then((value) async {
-        // ignore: use_build_context_synchronously
-        showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: const [
-                          Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
-                          ),
-                          Text("Payment Successfull"),
-                        ],
-                      ),
-                    ],
-                  ),
-                ));
-        await getthesharedpref();
-        // ignore: use_build_context_synchronously
+        add = int.parse(wallet!) + int.parse(amount);
+        await SharedPreferenceHelper().saveUserWallet(add.toString());
+        await DatabaseMethods().UpdateUserwallet(id!, add.toString());
 
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.check_circle, color: Colors.green),
+                    SizedBox(width: 10.0),
+                    Text("Payment Successful"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+
+        getSharedPrefs();
         paymentIntent = null;
       }).onError((error, stackTrace) {
-        print('Error is:--->$error $stackTrace');
+        print('Error: $error $stackTrace');
       });
     } on StripeException catch (e) {
-      print('Error is:---> $e');
+      print('Error: $e');
       showDialog(
-          context: context,
-          builder: (_) => const AlertDialog(
-                content: Text("Cancelled "),
-              ));
+        context: context,
+        builder: (_) => AlertDialog(
+          content: Text("Payment Cancelled"),
+        ),
+      );
     } catch (e) {
       print('$e');
     }
   }
 
-  //  Future<Map<String, dynamic>>
-  createPaymentIntent(String amount, String currency) async {
+  Future<Map<String, dynamic>> createPaymentIntent(
+      String amount, String currency) async {
     try {
       Map<String, dynamic> body = {
         'amount': calculateAmount(amount),
         'currency': currency,
-        'payment_method_types[]': 'card'
+        'payment_method_types[]': 'card',
       };
 
       var response = await http.post(
         Uri.parse('https://api.stripe.com/v1/payment_intents'),
         headers: {
           'Authorization': 'Bearer $secretKey',
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: body,
       );
-      // ignore: avoid_print
-      print('Payment Intent Body->>> ${response.body.toString()}');
+
       return jsonDecode(response.body);
     } catch (err) {
-      // ignore: avoid_print
-      print('err charging user: ${err.toString()}');
+      print('Error creating payment intent: $err');
+      throw err;
     }
   }
 
-  calculateAmount(String amount) {
-    final calculatedAmout = (int.parse(amount)) * 100;
+  String calculateAmount(String amount) {
+    final calculatedAmount = (int.parse(amount)) * 100;
+    return calculatedAmount.toString();
+  }
 
-    return calculatedAmout.toString();
+  Future<void> _openAddMoneyDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Container(
+          width: MediaQuery.of(context).size.width * 0.7,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Add Money',
+                style: TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 20.0),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  hintText: 'Enter amount to add',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 20.0),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    makePayment(amountController.text);
+                  },
+                  child: Text('Pay'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
