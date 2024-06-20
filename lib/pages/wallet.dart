@@ -6,7 +6,8 @@ import 'package:food/service/shared_pref.dart';
 import 'package:food/widgets/app_constant.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart' as Material; // Import with a prefix
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart' as Material;
 
 class Wallet extends StatefulWidget {
   const Wallet({Key? key}) : super(key: key);
@@ -30,11 +31,18 @@ class _WalletState extends State<Wallet> {
     setState(() {});
   }
 
+  Future<QuerySnapshot>? successfulOrdersFuture;
+
   @override
   void initState() {
     super.initState();
     initializeFirebase().then((_) {
-      getSharedPrefs();
+      getSharedPrefs().then((_) {
+        if (id != null) {
+          successfulOrdersFuture = DatabaseMethods().getSuccessfulOrders(id!);
+          setState(() {});
+        }
+      });
     });
   }
 
@@ -63,7 +71,7 @@ class _WalletState extends State<Wallet> {
                           color: Colors.grey.withOpacity(0.5),
                           spreadRadius: 1,
                           blurRadius: 3,
-                          offset: Offset(0, 2), // changes position of shadow
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
@@ -167,13 +175,34 @@ class _WalletState extends State<Wallet> {
   }
 
   Widget _buildSuccessfulOrders() {
-    return Column(
-      children: [
-        _buildOrderTile("Order #1", "\$50.00"),
-        _buildOrderTile("Order #2", "\$75.00"),
-        _buildOrderTile("Order #3", "\$100.00"),
-        _buildOrderTile("Order #4", "\$120.00"),
-      ],
+    if (successfulOrdersFuture == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    return FutureBuilder<QuerySnapshot>(
+      future: successfulOrdersFuture!,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No successful orders found.'));
+        }
+
+        List<Widget> orderTiles = snapshot.data!.docs.map((doc) {
+          var data = doc.data() as Map<String, dynamic>;
+          return _buildOrderTile(data['Name'], data['Total']);
+        }).toList();
+
+        return Column(
+          children: orderTiles,
+        );
+      },
     );
   }
 
@@ -281,47 +310,33 @@ class _WalletState extends State<Wallet> {
   }
 
   Future<void> _openAddMoneyDialog(BuildContext context) async {
-    await showDialog(
+    showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        content: Container(
-          width: MediaQuery.of(context).size.width * 0.7,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Add Money',
-                style: TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20.0),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  hintText: 'Enter amount to add',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              SizedBox(height: 20.0),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    makePayment(amountController.text);
-                  },
-                  child: Text('Pay'),
-                ),
-              ),
-            ],
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Add Money to Wallet"),
+          content: TextField(
+            controller: amountController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(hintText: "Enter amount"),
           ),
-        ),
-      ),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text("Add"),
+              onPressed: () {
+                makePayment(amountController.text);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

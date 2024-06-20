@@ -6,7 +6,7 @@ import 'package:food/service/shared_pref.dart';
 import 'package:food/widgets/widget_support.dart';
 
 class Order extends StatefulWidget {
-  const Order({Key? key});
+  const Order({super.key});
 
   @override
   State<Order> createState() => _OrderState();
@@ -26,7 +26,7 @@ class _OrderState extends State<Order> {
     });
   }
 
-  Future<void> getSharedPref() async {
+  Future<void> getthesharedpref() async {
     id = await SharedPreferenceHelper().getUserId();
     wallet = await SharedPreferenceHelper().getUserWallet();
     if (mounted) {
@@ -34,18 +34,17 @@ class _OrderState extends State<Order> {
     }
   }
 
-  Future<void> onLoad() async {
-    await getSharedPref();
-    Stream<QuerySnapshot<Object?>> stream =
-        await DatabaseMethods().getFoodCart(id!);
-    setState(() {
-      foodStream = stream;
-    });
+  Future<void> ontheload() async {
+    await getthesharedpref();
+    foodStream = await DatabaseMethods().getFoodCart(id!);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void initState() {
-    onLoad();
+    ontheload();
     startTimer();
     super.initState();
   }
@@ -57,14 +56,6 @@ class _OrderState extends State<Order> {
   }
 
   Stream<QuerySnapshot<Object?>>? foodStream;
-
-  void updateQuantity(String cartItemId, int newQuantity) async {
-    if (newQuantity > 0) {
-      await DatabaseMethods()
-          .updateCartItemQuantity(id!, cartItemId, newQuantity);
-      setState(() {}); // Update UI when quantity changes
-    }
-  }
 
   void deleteCartItem(String cartItemId, int itemTotal) async {
     try {
@@ -79,62 +70,73 @@ class _OrderState extends State<Order> {
     }
   }
 
+  void showSnackBar(String message, {bool success = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: success ? Colors.green : Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> checkout() async {
-    int? userWalletAmount =
-        await SharedPreferenceHelper().getUserWalletAmount();
+    int userWalletAmount = int.parse(wallet ?? '0');
 
-    if (userWalletAmount != null && total <= userWalletAmount) {
-      // Confirm Checkout
-      bool confirm = await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Confirm Checkout'),
-          content: Text('Are you sure you want to checkout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Confirm'),
-            ),
-          ],
-        ),
-      );
+    if (userWalletAmount < total) {
+      showSnackBar("Insufficient wallet balance!", success: false);
+      return;
+    }
 
-      if (confirm) {
-        // Save order to Firestore
-        CollectionReference ordersRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(id)
-            .collection('Orders');
+    bool confirm = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm Checkout'),
+        content: Text('Are you sure you want to checkout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Confirm'),
+          ),
+        ],
+      ),
+    );
 
-        CollectionReference cartRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(id)
-            .collection('Cart');
+    if (confirm) {
+      CollectionReference ordersRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(id)
+          .collection('Orders');
 
-        QuerySnapshot cartSnapshot = await cartRef.get();
+      CollectionReference cartRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(id)
+          .collection('Cart');
 
-        for (var doc in cartSnapshot.docs) {
-          await ordersRef.add(doc.data()!);
-        }
+      QuerySnapshot cartSnapshot = await cartRef.get();
 
-        // Clear cart
-        for (var doc in cartSnapshot.docs) {
-          await doc.reference.delete();
-        }
-
-        setState(() {
-          total = 0;
-        });
-
-        showSnackBar('Checkout successful!', success: true);
+      for (var doc in cartSnapshot.docs) {
+        await ordersRef.add(doc.data()!);
       }
-    } else {
-      // Wallet balance is insufficient
-      showSnackBar('Insufficient wallet balance!', success: false);
+
+      for (var doc in cartSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      int newWalletAmount = userWalletAmount - total;
+      await DatabaseMethods().UpdateUserwallet(id!, newWalletAmount.toString());
+      await SharedPreferenceHelper().saveUserWallet(newWalletAmount.toString());
+
+      setState(() {
+        total = 0;
+        foodStream = null; // Clear the cart items
+      });
+
+      showSnackBar('Checkout successful!', success: true);
     }
   }
 
@@ -151,8 +153,7 @@ class _OrderState extends State<Order> {
             separatorBuilder: (BuildContext context, int index) => Divider(),
             itemBuilder: (context, index) {
               DocumentSnapshot<Object?> ds = snapshot.data!.docs[index];
-              int itemTotal = int.parse(ds["Total"].toString()) *
-                  int.parse(ds["Quantity"].toString());
+              int itemTotal = int.parse(ds["Total"].toString());
               total += itemTotal;
               return Container(
                 padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
@@ -209,16 +210,6 @@ class _OrderState extends State<Order> {
           return Center(child: Text("Your cart is empty!"));
         }
       },
-    );
-  }
-
-  void showSnackBar(String message, {bool success = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: success ? Colors.green : Colors.red,
-        duration: Duration(seconds: 2),
-      ),
     );
   }
 

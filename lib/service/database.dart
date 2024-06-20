@@ -8,11 +8,20 @@ class DatabaseMethods {
         .set(userInfoMap);
   }
 
-  UpdateUserwallet(String id, String amount) async {
-    return await FirebaseFirestore.instance
-        .collection("users")
+  Future<QuerySnapshot> getSuccessfulOrders(String id) {
+    return FirebaseFirestore.instance
+        .collection('orders')
+        .where('id',
+            isEqualTo:
+                id) // Ensure 'Id' matches exactly with Firestore field name
+        .get();
+  }
+
+  Future<void> UpdateUserwallet(String id, String walletAmount) async {
+    return FirebaseFirestore.instance
+        .collection('users')
         .doc(id)
-        .update({"Wallet": amount});
+        .update({'wallet': walletAmount});
   }
 
   Future addFoodItem(Map<String, dynamic> userInfoMap, String name) async {
