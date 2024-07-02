@@ -5,6 +5,7 @@ import 'package:food/service/database.dart';
 import 'package:food/service/shared_pref.dart';
 import 'package:food/widgets/widget_support.dart';
 import 'package:random_string/random_string.dart';
+import 'package:flutter/scheduler.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -16,11 +17,9 @@ class SignUp extends StatefulWidget {
 class _SignUpState extends State<SignUp> {
   String email = "", password = "", name = "";
 
-  TextEditingController namecontroller = new TextEditingController();
-
-  TextEditingController passwordcontroller = new TextEditingController();
-
-  TextEditingController mailcontroller = new TextEditingController();
+  TextEditingController namecontroller = TextEditingController();
+  TextEditingController passwordcontroller = TextEditingController();
+  TextEditingController mailcontroller = TextEditingController();
 
   final _formkey = GlobalKey<FormState>();
 
@@ -49,9 +48,10 @@ class _SignUpState extends State<SignUp> {
         await SharedPreferenceHelper().saveUserWallet('0');
         await SharedPreferenceHelper().saveUserId(Id);
 
-        // ignore: use_build_context_synchronously
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => LogIn()));
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => LogIn()));
+        });
       } on FirebaseException catch (e) {
         if (e.code == 'weak-password') {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -64,7 +64,7 @@ class _SignUpState extends State<SignUp> {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               backgroundColor: Colors.orangeAccent,
               content: Text(
-                "Account Already exsists",
+                "Account Already exists",
                 style: TextStyle(fontSize: 18.0),
               )));
         }
@@ -200,8 +200,8 @@ class _SignUpState extends State<SignUp> {
                                       name = namecontroller.text;
                                       password = passwordcontroller.text;
                                     });
+                                    registration();
                                   }
-                                  registration();
                                 },
                                 child: Material(
                                   elevation: 5.0,

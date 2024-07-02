@@ -10,10 +10,8 @@ class DatabaseMethods {
 
   Future<QuerySnapshot> getSuccessfulOrders(String id) {
     return FirebaseFirestore.instance
-        .collection('orders')
-        .where('id',
-            isEqualTo:
-                id) // Ensure 'Id' matches exactly with Firestore field name
+        .collection('Orders')
+        .where('id', isEqualTo: id)
         .get();
   }
 
@@ -21,7 +19,7 @@ class DatabaseMethods {
     return FirebaseFirestore.instance
         .collection('users')
         .doc(id)
-        .update({'wallet': walletAmount});
+        .update({'Wallet': walletAmount});
   }
 
   Future addFoodItem(Map<String, dynamic> userInfoMap, String name) async {

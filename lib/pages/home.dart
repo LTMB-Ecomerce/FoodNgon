@@ -18,7 +18,7 @@ class _HomeState extends State<Home> {
   String userName = "";
 
   ontheload() async {
-    fooditemStream = await DatabaseMethods().getFoodItem("Ice-Cream");
+    fooditemStream = await DatabaseMethods().getFoodItem("Chicken");
     setState(() {});
   }
 
